@@ -1,26 +1,18 @@
 <template>
   <div id="app">
-    <Alert :alert_data="alert" />
-    <Modal :trigger="trigger" />
-    <Header />
-    <router-view @alert="showNotify" @modal="showModal"></router-view>
+    <component :is="layout"></component>
   </div>
 </template>
 
 <script>
-import { send } from './tools.js'
-import Table from '@/components/Table'
-import Alert from '@/components/Alert'
-import Modal from '@/components/Modal'
-import Header from '@/components/Header'
+import defaultLayout from '@/layouts/DefaultLayout.vue';
+import AuthLayout from '@/layouts/AuthLayout.vue';
 
 export default {
   name: 'App',
   components: {
-    Table,
-    Alert,
-    Header,
-    Modal,
+    AuthLayout,
+    defaultLayout
   },
   data() {
     return {
@@ -38,62 +30,17 @@ export default {
       trigger: false,
     }
   },
-  mounted() {
+  computed: {
+    layout() {
+      switch (this.$route.meta.layout) {
+        case 'auth-layout':
+            return 'AuthLayout';
+        default:
+            return 'defaultLayout';
+      }
+    },
   },
   methods: {
-    showNotify(data) {
-      this.alert.text = data.text;
-      this.alert.status = data.status;
-
-      setTimeout( ()=> {
-        this.alert.text = null;
-      }, 3200)
-    },
-
-    showModal() {
-      this.trigger = true;
-    },
-
-    async registration() {
-      const res = await send('/auth/registration', {
-        username: this.username,
-        password: this.password,
-        confirmpass: this.confirmpass,
-        email: this.email,
-      })
-
-      console.log(res);
-    },
-
-    async login() {
-      const res = await send('/auth/login', {
-        username: this.username,
-        password: this.password,
-      })
-
-      if (res.status === 200) {
-        localStorage.setItem('token', res.token);
-        location.reload();
-      }
-
-      console.log(res);
-    },
-
-    async getData() {
-      const res = await fetch(`/auth/users`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-
-      console.log(res)
-
-    },
-
-    async logout() {
-      localStorage.removeItem('token');
-      location.reload();
-    }
   }
 }
 </script>

@@ -1,4 +1,35 @@
-export { send, modalStatus, timestampToDate };
+export { send, modalStatus, timestampToDate, getCookie, setCookie };
+
+function getCookie(name) {
+    let matches = document.cookie.match(new RegExp(
+        "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+    ));
+    return matches ? decodeURIComponent(matches[1]) : undefined;
+}
+
+function setCookie(name, value, options = {}) {
+
+    options = {
+        path: '/',
+        ...options
+    };
+
+    if (options.expires instanceof Date) {
+        options.expires = options.expires.toUTCString();
+    }
+
+    let updatedCookie = encodeURIComponent(name) + "=" + encodeURIComponent(value);
+
+    for (let optionKey in options) {
+        updatedCookie += "; " + optionKey;
+        let optionValue = options[optionKey];
+        if (optionValue !== true) {
+        updatedCookie += "=" + optionValue;
+        }
+    }
+
+    document.cookie = updatedCookie;
+}
 
 async function send(uri, data, sendType = 'POST', type = 'json') {
 
@@ -10,12 +41,16 @@ async function send(uri, data, sendType = 'POST', type = 'json') {
 
     switch (sendType, type) {
         case 'POST', 'formData':
-            sendObject.contentType = 'multipart/form-data';
+            sendObject.headers = {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${getCookie('token')}`
+            };
             sendObject.body = data;
             break;
         case 'POST', 'json':
             sendObject.headers = {
-                'Content-Type': 'application/json; charset=utf-8'
+                'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': `Bearer ${getCookie('token')}`
             };
             sendObject.body = JSON.stringify(data);
             break;

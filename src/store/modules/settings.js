@@ -86,19 +86,22 @@ const actions = {
     async getRooms(ctx) {
         const res = await send('/settings/getrooms');
 
-        ctx.commit('updateRooms', res.data);
+        if (res.status === 200)
+            ctx.commit('updateRooms', res.data);
     },
 
     async getUsers(ctx) {
         const res = await send('/settings/getusers');
 
-        ctx.commit('updateUsers', res.data);
+        if (res.status === 200)
+            ctx.commit('updateUsers', res.data);
     },
 
     async getSpecs(ctx) {
         const res = await send('/settings/getspecs');
 
-        ctx.commit('updateSpecs', res.data);
+        if (res.status === 200)
+            ctx.commit('updateSpecs', res.data);
     },
 
     async addUser({ commit }, data) {
