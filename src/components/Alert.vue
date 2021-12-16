@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import {mapActions, mapGetters, mapMutations} from 'vuex';
+import { mapGetters } from 'vuex';
 
 export default {
     name: 'Alert',
@@ -20,7 +20,7 @@ export default {
         }
     },
     computed: {
-        ...mapGetters([
+        ...mapGetters('alerts', [
             'toggleAlert'
         ]),
     },

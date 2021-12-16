@@ -80,8 +80,7 @@
 
 <script>
 import Multiselect from 'vue-multiselect';
-import {mapActions, mapGetters, mapMutations, mapState} from 'vuex';
-import {send} from '../tools.js';
+import {mapActions, mapGetters, mapMutations } from 'vuex';
 
 export default {
     name: 'Settings',
@@ -89,9 +88,9 @@ export default {
         Multiselect
     },
     async mounted() {
-        this.getSpecs();
-        this.getUsers();
-        this.getRooms();
+        await this.getSpecs();
+        await this.getUsers();
+        await this.getRooms();
     },
     data() {
         return {
@@ -101,12 +100,12 @@ export default {
         }
     },
     computed: {
-        ...mapState([
+        ...mapGetters('settings', [
             'settings'
         ]),
     },
     methods: {
-        ...mapActions([
+        ...mapActions('settings', [
             'getRooms',
             'getUsers',
             'getSpecs',
@@ -118,9 +117,12 @@ export default {
             'deleteSpec',
         ]),
 
-        ...mapMutations([
+        ...mapMutations('alerts', [
             'showAlert',
-            'changeUserGenre',
+        ]),
+
+        ...mapMutations('settings', [
+            "changeUserGenre",
         ]),
 
         changePage(type) {

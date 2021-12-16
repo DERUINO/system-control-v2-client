@@ -37,16 +37,16 @@
           type="text"
           placeholder="Поиск по имени"
           aria-label=".form-control-lg example"
-          v-model="tables.search.value"
+          v-model="search.value"
           @input="localSearchValues"
         />
       </div>
-      <div class="pagination-wrapper" v-if="tables.tables.count > 50">
+      <div class="pagination-wrapper" v-if="tables.count > 50">
         <nav aria-label="Page navigation example">
           <ul class="pagination">
             <li
               class="page-item"
-              @click="localGetPageContent(tables.pages.current - 1)"
+              @click="localGetPageContent(pages.current - 1)"
             >
               <a class="page-link" href="#" aria-label="Previous">
                 <span aria-hidden="true">&laquo;</span>
@@ -57,13 +57,13 @@
               :key="pageIndex"
               class="page-item"
               @click="localGetPageContent(pageIndex + 1)"
-              :class="{ active: tables.pages.current === pageIndex + 1 }"
+              :class="{ active: pages.current === pageIndex + 1 }"
             >
               <a class="page-link" href="#">{{ pageIndex + 1 }}</a>
             </li>
             <li
               class="page-item"
-              @click="localGetPageContent(tables.pages.current + 1)"
+              @click="localGetPageContent(pages.current + 1)"
             >
               <a class="page-link" href="#" aria-label="Next">
                 <span aria-hidden="true">&raquo;</span>
@@ -93,9 +93,9 @@
             >
               <th scope="row">
                 {{
-                  tables.pages.current === 1
+                  pages.current === 1
                     ? rowIndex + 1
-                    : (tables.pages.current - 1) * 50 + (rowIndex + 1)
+                    : (pages.current - 1) * 50 + (rowIndex + 1)
                 }}
               </th>
               <td>{{ row.username }}</td>
@@ -128,12 +128,12 @@
           Записей не найдено
         </div>
       </div>
-      <div class="pagination-wrapper" v-if="tables.tables.count > 50">
+      <div class="pagination-wrapper" v-if="tables.count > 50">
         <nav aria-label="Page navigation example">
           <ul class="pagination">
             <li
               class="page-item"
-              @click="localGetPageContent(tables.pages.current - 1)"
+              @click="localGetPageContent(pages.current - 1)"
             >
               <a class="page-link" href="#" aria-label="Previous">
                 <span aria-hidden="true">&laquo;</span>
@@ -150,7 +150,7 @@
             </li>
             <li
               class="page-item"
-              @click="localGetPageContent(tables.pages.current + 1)"
+              @click="localGetPageContent(pages.current + 1)"
             >
               <a class="page-link" href="#" aria-label="Next">
                 <span aria-hidden="true">&raquo;</span>
@@ -165,16 +165,11 @@
 
 <script>
 import Multiselect from "vue-multiselect";
-import { mapActions, mapGetters, mapMutations, mapState } from "vuex";
+import { mapActions, mapGetters, mapMutations } from "vuex";
 
 export default {
   name: "Table",
   components: { Multiselect },
-  async mounted() {
-    this.getTables();
-    this.getUsers();
-    this.getRooms();
-  },
   data() {
     return {
       request: false,
@@ -182,15 +177,26 @@ export default {
     };
   },
   computed: {
-    ...mapState(["tables", "settings"]),
 
-    ...mapGetters(["allTables", "pagesCount"]),
+    ...mapGetters("tables", [
+      "pagesCount",
+      "tables",
+      "pages",
+      "search",
+      "allTables",
+    ]),
+    ...mapGetters("settings", [
+      "settings",
+    ]),
+  },
+  async mounted() {
+    await this.getTables();
+    await this.getUsers();
+    await this.getRooms();
   },
   methods: {
-    ...mapActions([
+    ...mapActions('tables', [
       "getTables",
-      "getRooms",
-      "getUsers",
       "addTable",
       "deleteTable",
       "getOut",
@@ -199,7 +205,14 @@ export default {
       "searchValues",
     ]),
 
-    ...mapMutations(["showAlert"]),
+    ...mapActions('settings', [
+      "getUsers",
+      "getRooms",
+    ]),
+
+    ...mapMutations("alerts", [
+      "showAlert"
+    ]),
 
     async localSearchValues() {
       if (this.searchTimeout) {
