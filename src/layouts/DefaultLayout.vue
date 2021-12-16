@@ -8,6 +8,9 @@
 </template>
 
 <script>
+import jwt_decode from "jwt-decode";
+import { mapGetters, mapActions } from 'vuex';
+
 import Alert from '@/components/Alert'
 import Modal from '@/components/Modal'
 import Header from '@/components/Header'
@@ -28,7 +31,21 @@ export default {
             trigger: false,
         }
     },
+    computed: {
+        ...mapGetters({
+            accessToken: 'globals/accessToken',
+        }),
+    },
+    created() {
+        const decodedToken = jwt_decode(this.accessToken);
+
+        this.getUserInfo({ id: decodedToken.id });
+    },
     methods: {
+        ...mapActions({
+            getUserInfo: 'globals/getUserInfo',
+        }),
+
         showNotify(data) {
             this.alert.text = data.text;
             this.alert.status = data.status;

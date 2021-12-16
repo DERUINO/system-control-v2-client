@@ -3,9 +3,10 @@
       <div class="login-wrapper">
           <div class="login__container">
             <div class="login__title">Авторизация</div>
-            <input type="text" v-model="username">
-            <input type="password" v-model="password">
+            <input type="text" v-model="username" placeholder="login">
+            <input type="password" v-model="password" placeholder="password">
             <button type="button" @click="login">Войти</button>
+            <div class="login__back"><router-link to="/registration">Перейти к регистрации</router-link></div>
           </div>
       </div>
   </div>
@@ -69,6 +70,10 @@ export default {
                     width: 100%;
                     margin: 0 auto;
                 }
+            }
+            &__back {
+                margin-top: 10px;
+                font-size: 14px;
             }
         }
         

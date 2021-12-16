@@ -19,18 +19,33 @@
                 <li class="nav-item">
                     <a class="nav-link" href="#">Поиск</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Вход</a>
-                </li>
             </ul>
+            <div class="navigation__logout" @click="logout">
+                <div class="navigation__logout-name">{{ user.username }}</div>
+                <div class="navigation__logout-button">выход</div>
+            </div>
         </div>
     </div>
   </div>
 </template>
 
 <script>
+import { deleteCookie } from '@/tools';
+import { mapGetters } from 'vuex';
+
 export default {
     name: 'Header',
+    computed: {
+        ...mapGetters({
+            user: 'globals/userInfo',
+        }),
+    },
+    methods: {
+        logout() {
+            deleteCookie('token');
+            location.reload();
+        }
+    }
 }
 </script>
 
@@ -39,6 +54,29 @@ export default {
         .navigation {
             margin-top: 15px;
             margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+
+            &__logout {
+                margin-right: 10px;
+                text-align: right;
+
+                &-name {
+                    font-weight: bolder;
+                }
+
+                &-button {
+                    font-size: 12px;
+                    margin-top: 5px;
+                    margin-right: 1px;
+                    cursor: pointer;
+
+                    &:hover {
+                        color: gray;
+                    }
+                }
+            }
         }
 
         a {

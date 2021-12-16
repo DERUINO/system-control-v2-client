@@ -1,4 +1,4 @@
-export { send, modalStatus, timestampToDate, getCookie, setCookie };
+export { send, modalStatus, timestampToDate, getCookie, setCookie, deleteCookie };
 
 function getCookie(name) {
     let matches = document.cookie.match(new RegExp(
@@ -29,6 +29,12 @@ function setCookie(name, value, options = {}) {
     }
 
     document.cookie = updatedCookie;
+}
+
+function deleteCookie(name) {
+    setCookie(name, "", {
+        'max-age': -1
+    })
 }
 
 async function send(uri, data, sendType = 'POST', type = 'json') {

@@ -5,7 +5,7 @@ import store from '../store';
 import Table from '../components/Table.vue'
 import Settings from '../components/Settings.vue'
 import Login from '../components/auth/Login.vue'
-import Registration from '../components/Registration.vue'
+import Registration from '../components/auth/Registration.vue'
 import guest from './middleware/guest';
 import user from './middleware/user';
 
@@ -48,7 +48,6 @@ const routes = [
     meta: {
       layout: 'auth-layout',
       middleware: [guest],
-      
     }
   }
 ]
