@@ -12,6 +12,10 @@ npm run serve
 npm run build
 ```
 
+#### Данные для входа
+- login - user
+- password - qwerty123
+
 ### Ссылка на сервер приложения
 
 [Сервер](https://github.com/DERUINO/system-control-v2)
