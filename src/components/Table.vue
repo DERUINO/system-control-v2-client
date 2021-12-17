@@ -366,6 +366,7 @@ export default {
   }
 
   .table {
+    margin-bottom: 30px;
     .no-tables {
       text-align: center;
     }

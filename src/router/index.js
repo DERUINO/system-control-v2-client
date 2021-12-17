@@ -6,6 +6,8 @@ import Table from '../components/Table.vue'
 import Settings from '../components/Settings.vue'
 import Login from '../components/auth/Login.vue'
 import Registration from '../components/auth/Registration.vue'
+import NotFound from '@/views/NotFound.vue';
+
 import guest from './middleware/guest';
 import user from './middleware/user';
 
@@ -48,6 +50,14 @@ const routes = [
     meta: {
       layout: 'auth-layout',
       middleware: [guest],
+    }
+  },
+  {
+    path: '*',
+    name: 'NotFound',
+    component: NotFound,
+    meta: {
+      layout: 'auth-layout',
     }
   }
 ]

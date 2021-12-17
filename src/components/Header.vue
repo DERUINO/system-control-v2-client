@@ -20,9 +20,9 @@
                     <a class="nav-link" href="#">Поиск</a>
                 </li>
             </ul>
-            <div class="navigation__logout" @click="logout">
+            <div class="navigation__logout">
                 <div class="navigation__logout-name">{{ user.username }}</div>
-                <div class="navigation__logout-button">выход</div>
+                <div class="navigation__logout-button" @click="logout">выход</div>
             </div>
         </div>
     </div>

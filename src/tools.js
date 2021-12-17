@@ -1,3 +1,5 @@
+import router from "./router";
+
 export { send, modalStatus, timestampToDate, getCookie, setCookie, deleteCookie };
 
 function getCookie(name) {
@@ -63,9 +65,26 @@ async function send(uri, data, sendType = 'POST', type = 'json') {
     }
 
     const result = await fetch(url, sendObject);
-    let response = type === 'json' ? await result.json() : result;
 
-    return response;
+    if (result.ok) {
+        let response = type === 'json' ? await result.json() : result;
+
+        return response;
+    } else {
+        Promise.reject(result);
+
+        switch (result.status) {
+            case 401:
+                deleteCookie('token');
+                location.reload();
+                break;
+            case 404:
+                router.push({path: '/404'});
+                break;
+            default:
+                return type === 'json' ? await result.json() : result;
+        }
+    }
 }
 
 async function modalStatus(status, method) {
