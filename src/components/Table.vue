@@ -184,6 +184,7 @@ export default {
       "pages",
       "search",
       "allTables",
+      'currentPage',
     ]),
     ...mapGetters("settings", [
       "settings",
@@ -221,9 +222,9 @@ export default {
 
       this.searchTimeout = setTimeout(() => {
         this.searchTimeout = null;
-        if (this.tables.search.value.length > 0) {
+        if (this.search.value.length > 0) {
           this.searchValues({
-            value: this.tables.search.value,
+            value: this.search.value,
           });
         } else {
           this.getTables();
@@ -234,22 +235,22 @@ export default {
     localGetPageContent(pageIndex) {
       if (
         pageIndex > 0 &&
-        pageIndex !== this.tables.pages.current &&
+        pageIndex !== this.pages.current &&
         pageIndex <= this.pagesCount &&
-        !this.getSearch.value
+        !this.search.value
       ) {
         this.getPageContent({
           currentPage: pageIndex,
         });
       } else if (
         pageIndex > 0 &&
-        pageIndex !== this.tables.pages.current &&
+        pageIndex !== this.pages.current &&
         pageIndex <= this.pagesCount &&
-        this.getSearch.value
+        this.search.value
       ) {
         this.getSearchedPageContent({
           currentPage: pageIndex,
-          name: this.getSearch.value,
+          name: this.search.value,
         });
       }
     },

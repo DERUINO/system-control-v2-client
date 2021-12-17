@@ -69,6 +69,8 @@ const getters = {
         return state.pages.count = count;
     },
 
+    currentPage: state => state.pages.current,
+
     tables: state => state.tables,
     pages: state => state.pages,
     search: state => state.search,
