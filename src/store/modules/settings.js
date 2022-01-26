@@ -80,6 +80,7 @@ const mutations = {
 
 const getters = {
     settings: state => state,
+    users: state => state.users,
 }
 
 const actions = {

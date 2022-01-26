@@ -1,9 +1,16 @@
 <template>
   <div class="chat">
-    <div class="chat-messages">
-        <div v-for="(message, messageIndex) in message.list" :key="messageIndex" class="chat-message">
-            <div class="message-name">{{ message.name }}:</div>
-            <div class="message-text">{{ message.text }}</div>
+    <div class="chat-container">
+        <div class="chat-dialogs">
+            <div class="chat-dialog" v-for="(user, userIndex) in preparedUsers" :key="userIndex">
+                {{ user.username }}
+            </div>
+        </div>
+        <div class="chat-messages">
+            <div v-for="(message, messageIndex) in message.list" :key="messageIndex" class="chat-message">
+                <div class="message-name">{{ message.name }}:</div>
+                <div class="message-text">{{ message.text }}</div>
+            </div>
         </div>
     </div>
     <div class="chat-send">
@@ -15,7 +22,7 @@
 
 <script>
 import { io } from 'socket.io-client';
-import { mapGetters } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 
 export default {
     name: "Chat",
@@ -31,9 +38,14 @@ export default {
     computed: {
         ...mapGetters({
             userInfo: 'globals/userInfo',
+            accounts: 'globals/accounts',
         }),
+
+        preparedUsers() {
+            return this.accounts.filter(user => user._id !== this.userInfo._id);
+        }
     },
-    created() {
+    async created() {
         this.io = io('http://localhost:5000');
 
         this.io.on('message:recieved', data => {
@@ -41,13 +53,19 @@ export default {
                 this.message.list.push(data);
             }
         )
+
+        await this.getAccounts();
     },
     methods: {
+        ...mapActions('globals', [
+            'getAccounts',
+        ]),
+
         sendMessage() {
             if (this.message.current) {
-                console.log(123);
                 const data = {
-                    id: Date.now(),
+                    id: this.userInfo._id,
+                    recieveId: '61f04446952d20d074c8a90d',
                     text: this.message.current,
                     name: this.userInfo.username
                 }
@@ -70,10 +88,29 @@ export default {
     min-height: 80vh;
     padding: 0 10%;
 
+    .chat-container {
+        width: 100%;
+        display: flex;
+        justify-content: flex-start;
+        border: 1px solid gray;
+
+        .chat-dialogs {
+            width: 300px;
+            border-right: 1px solid gray;
+            background: rgba(0,0,0, 0.1);
+
+            .chat-dialog {
+                padding: 10px;
+                border-bottom: 1px solid rgba(0,0,0,0.2);
+            }
+        }
+    }
+
     .chat-messages {
         width: 100%;
         height: 500px;
         overflow: auto;
+        padding: 10px;
     }
 
     .chat-message {
