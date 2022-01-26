@@ -3,7 +3,7 @@
         <Alert :alert_data="alert" />
         <Modal :trigger="trigger" />
         <Header />
-        <router-view @alert="showNotify" @modal="showModal"></router-view>
+        <router-view @alert="showNotify" @modal="showModal" v-if="!isLoading"></router-view>
     </div>
 </template>
 
@@ -29,6 +29,7 @@ export default {
                 status: '',
             },
             trigger: false,
+            isLoading: true,
         }
     },
     computed: {
@@ -36,10 +37,12 @@ export default {
             accessToken: 'globals/accessToken',
         }),
     },
-    created() {
+    async created() {
         const decodedToken = jwt_decode(this.accessToken);
 
-        this.getUserInfo({ id: decodedToken.id });
+        await this.getUserInfo({ id: decodedToken.id });
+
+        this.isLoading = false;
     },
     methods: {
         ...mapActions({
