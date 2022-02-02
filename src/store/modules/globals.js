@@ -1,15 +1,18 @@
 import { getCookie, send } from '@/tools';
+import { io } from 'socket.io-client';
 
 const state = {
     token: getCookie('token') ?? '',
     user: {},
     accounts: [],
+    socket: null,
 }
 
 const getters = {
     accessToken: state => state.token,
     userInfo: state => state.user,
     accounts: state => state.accounts,
+    socket: state => state.socket,
 }
 
 const mutations = {
@@ -18,6 +21,9 @@ const mutations = {
     },
     SET_ACCOUNTS(state, res) {
         state.accounts = res;
+    },
+    SET_SOCKET(state, res) {
+        state.socket = res;
     }
 }
 
@@ -34,6 +40,14 @@ const actions = {
         if (res.status === 200) {
             commit('SET_ACCOUNTS', res.data);
         }
+    },
+
+    connectToSocket({commit, getters}) {
+        const socket = io('http://localhost:5000');
+        
+        socket.emit('userJoined', { userId: getters.userInfo._id });
+
+        commit("SET_SOCKET", socket);
     }
 }
 

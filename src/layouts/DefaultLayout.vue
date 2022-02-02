@@ -41,12 +41,14 @@ export default {
         const decodedToken = jwt_decode(this.accessToken);
 
         await this.getUserInfo({ id: decodedToken.id });
+        await this.connectToSocket();
 
         this.isLoading = false;
     },
     methods: {
         ...mapActions({
             getUserInfo: 'globals/getUserInfo',
+            connectToSocket: 'globals/connectToSocket'
         }),
 
         showNotify(data) {

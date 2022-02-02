@@ -1,7 +1,7 @@
 <template>
   <div class="chat">
     <div class="chat-container">
-        <div class="chat-dialogs" @click="newMessageVoice">
+        <div class="chat-dialogs">
             <div class="chat-dialog" v-for="(user, userIndex) in preparedUsers" :key="userIndex" @click="selectUser(user)">
                 {{ user.username }}
             </div>
@@ -12,13 +12,20 @@
             <div class="chat-messages-container" ref="messages">
                 <div class="chat-messages" id="messages">
                     <div v-for="(message, messageIndex) in messages" :key="messageIndex" class="chat-message">
-                        <div class="message-name">{{ message.authorId.username }}:</div>
+                        <div class="message-name">{{ message.authorId.username }}</div>
                         <div class="message-text">{{ message.text }}</div>
                     </div>
                 </div>
                 <div class="chat-messages-bottom"></div>
             </div>
-            <div v-show="isNewMessagesButtonVisible" class="chat-messages-unread">new<br>↓</div>
+            <div
+                v-show="isNewMessagesButtonVisible"
+                class="chat-messages-unread"
+                @click="lastMessageScroll"
+            >
+                <img src="@/assets/arrow-down.svg">
+                <span>{{ unreadMessagesCount }}</span>
+            </div>
             <div class="chat-send">
                 <input type="text" v-model="message.current" @keyup.enter="sendMessage">
                 <button type="button" @click="sendMessage">отправить</button>
@@ -29,7 +36,6 @@
 </template>
 
 <script>
-import { io } from 'socket.io-client';
 import { mapGetters, mapActions } from 'vuex';
 
 export default {
@@ -44,9 +50,9 @@ export default {
                 recieveId: null,
                 name: '',
             },
-            io: null,
-            isScrollEnded: false,
+            isScrollEnded: true,
             allMessagesReaded: true,
+            unreadMessagesCount: 0,
         }
     },
     computed: {
@@ -54,37 +60,28 @@ export default {
             userInfo: 'globals/userInfo',
             messages: 'chat/messages',
             accounts: 'globals/accounts',
+            io: 'globals/socket',
         }),
 
         preparedUsers() {
             return this.accounts.filter(user => user._id !== this.userInfo._id);
         },
 
+        preparedMessages() {
+            return this.messages.reduce((prevent, current, index, array) => {
+                return prevent.authorId?._id === this.userInfo._id
+                    ? prevent + 1
+                    : 0;
+            }, 0)
+        },
+
         isNewMessagesButtonVisible() {
             return !this.allMessagesReaded && !this.isScrollEnded;
-        }
+        },
     },
     async created() {
-        this.io = io('http://localhost:5000');
-
-        this.io.emit('userJoined', { userId: this.userInfo._id });
-
-        this.io.on('message:recieved', async data => {
-            console.log(data);
-
-            new Promise(resolve => {
-                resolve();
-            }).then(() => {
-                this.messages.push(data);
-                this.allMessagesReaded = false;
-            }).then(() => {
-                if (this.isScrollEnded) {
-                    this.lastMessageScroll(); 
-                }
-            })
-        });
-
         await this.getAccounts();
+        this.watchNewMessage();
     },
     mounted() {
         this.scrollEvent();
@@ -107,14 +104,19 @@ export default {
                     text: this.message.current
                 }
 
-                this.messages.push(data);
                 this.message.current = '';
+
+                new Promise(resolve => {
+                    resolve();
+                }).then(() => {
+                    this.messages.push(data);
+                }).then(() => {
+                    this.lastMessageScroll();
+                })
 
                 await this.addMessage(data);
 
                 this.io.emit('message', data);
-
-                this.lastMessageScroll();
             }
         },
 
@@ -137,12 +139,20 @@ export default {
                 behavior: 'auto',
                 block: 'end',
             });
+
+            if (this.unreadMessagesCount > 0) {
+                setTimeout(() => {
+                    this.messages[this.messages.length - 1].unread = false;
+                }, 1000);
+            }
         },
 
         isScrollBottom() {
             const block = this.$refs.messages;
             if (block.scrollTop === block.scrollHeight - block.clientHeight) {
                 this.isScrollEnded = true;
+                this.allMessagesReaded = true;
+                this.unreadMessagesCount = 0;
             } else {
                 this.isScrollEnded = false;
             }
@@ -153,11 +163,24 @@ export default {
             block.addEventListener('scroll', this.isScrollBottom);
         },
 
-        // newMessageVoice() {
-        //     const sound = new Audio();
-        //     sound.src = 'assets/newMessage.ogg';
-        //     sound.play();
-        // }
+        watchNewMessage() {
+            this.io.on('message:recieved', async data => {
+                new Promise(resolve => {
+                    resolve();
+                }).then(() => {
+                    data.unread = true;
+                    this.messages.push(data);
+                }).then(() => {
+                    this.unreadMessagesCount = this.unreadMessagesCount + 1;
+                    this.allMessagesReaded = false;
+                    
+                    if (this.isScrollEnded) {
+                        this.lastMessageScroll(); 
+                    }
+                    
+                })
+            });
+        }
     }
 }
 </script>
@@ -216,7 +239,7 @@ export default {
     }
 
     .chat-messages {
-        margin-top: 30px;
+        margin-top: 60px;
     }
 
     .chat-messages-profile {
@@ -233,15 +256,41 @@ export default {
         position: absolute;
         bottom: 60px;
         right: 50px;
-        width: 50px;
-        height: 50px;
-        box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        width: 42px;
+        height: 42px;
+        box-shadow: 0 0 3px rgba(0,0,0, 0.5);
         line-height: 1;
         padding-top: 10px;
         text-align: center;
         font-weight: bolder;
         border-radius: 50%;
-        background: #e3e3e3;
+        background: white;
+        cursor: pointer;
+
+        &:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        img {
+            margin-top: 2px;
+            width: 18px;
+        }
+
+        span {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: gray;
+            padding: 5px;
+            font-size: 12px;
+            color: white;
+            line-height: 0.8;
+            margin-left: 1px;
+            font-weight: normal;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+        }
     }
 
     .chat-messages-wrapper {
@@ -254,15 +303,13 @@ export default {
     }
 
     .chat-messages-container {
-        padding: 0 10px;
+        padding: 0 30px;
         max-height: 100%;
         overflow: auto;
     }
 
     .chat-message {
         width: 100%;
-        display: flex;
-        justify-content: flex-start;
         padding-bottom: 10px;
 
         .message-name {
@@ -273,7 +320,7 @@ export default {
         }
 
         .message-text {
-            margin-left: 20px;
+            font-size: 14px;
         }
     }
 }
