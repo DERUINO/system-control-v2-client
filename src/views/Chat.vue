@@ -1,21 +1,24 @@
 <template>
   <div class="chat">
     <div class="chat-container">
-        <div class="chat-dialogs">
-            <div class="chat-dialog" v-for="(user, userIndex) in preparedUsers" :key="userIndex" @click="selectUser(user._id)">
+        <div class="chat-dialogs" @click="newMessageVoice">
+            <div class="chat-dialog" v-for="(user, userIndex) in preparedUsers" :key="userIndex" @click="selectUser(user)">
                 {{ user.username }}
             </div>
         </div>
-        <div v-if="!recieveId" class="chat-none-selected"><div>выберите диалог</div></div>
-        <div class="chat-messages-wrapper" v-else>
-            <div class="chat-messages-container" id="messages">
-                <div class="chat-messages">
+        <div v-show="!dialog.recieveId" class="chat-none-selected"><div>выберите диалог</div></div>
+        <div v-show="dialog.recieveId" class="chat-messages-wrapper">
+            <div class="chat-messages-profile">{{ dialog.name }}</div>
+            <div class="chat-messages-container" ref="messages">
+                <div class="chat-messages" id="messages">
                     <div v-for="(message, messageIndex) in messages" :key="messageIndex" class="chat-message">
-                        <div class="message-name">{{ message.authorId }}:</div>
+                        <div class="message-name">{{ message.authorId.username }}:</div>
                         <div class="message-text">{{ message.text }}</div>
                     </div>
                 </div>
+                <div class="chat-messages-bottom"></div>
             </div>
+            <div v-show="isNewMessagesButtonVisible" class="chat-messages-unread">new<br>↓</div>
             <div class="chat-send">
                 <input type="text" v-model="message.current" @keyup.enter="sendMessage">
                 <button type="button" @click="sendMessage">отправить</button>
@@ -37,8 +40,13 @@ export default {
                 current: '',
                 list: [],
             },
-            recieveId: null,
+            dialog: {
+                recieveId: null,
+                name: '',
+            },
             io: null,
+            isScrollEnded: false,
+            allMessagesReaded: true,
         }
     },
     computed: {
@@ -50,6 +58,10 @@ export default {
 
         preparedUsers() {
             return this.accounts.filter(user => user._id !== this.userInfo._id);
+        },
+
+        isNewMessagesButtonVisible() {
+            return !this.allMessagesReaded && !this.isScrollEnded;
         }
     },
     async created() {
@@ -57,19 +69,25 @@ export default {
 
         this.io.emit('userJoined', { userId: this.userInfo._id });
 
-        this.io.on('message:recieved', data => {
+        this.io.on('message:recieved', async data => {
             console.log(data);
-            this.messages.push(data);
 
-            const scroll = document.getElementById('messages');
-            console.log(scroll.scrollTop, scroll.scrollHeight);
-
-            if (scroll.scrollTop !== scroll.scrollHeight) {
-               scroll.scrollTop = scroll.scrollHeight + 10000; 
-            }
+            new Promise(resolve => {
+                resolve();
+            }).then(() => {
+                this.messages.push(data);
+                this.allMessagesReaded = false;
+            }).then(() => {
+                if (this.isScrollEnded) {
+                    this.lastMessageScroll(); 
+                }
+            })
         });
 
         await this.getAccounts();
+    },
+    mounted() {
+        this.scrollEvent();
     },
     methods: {
         ...mapActions({
@@ -81,8 +99,11 @@ export default {
         async sendMessage() {
             if (this.message.current) {
                 const data = {
-                    authorId: this.userInfo._id,
-                    recieveId: this.recieveId,
+                    authorId: {
+                        id: this.userInfo._id,
+                        username: this.userInfo.username
+                    },
+                    recieveId: this.dialog.recieveId,
                     text: this.message.current
                 }
 
@@ -93,19 +114,50 @@ export default {
 
                 this.io.emit('message', data);
 
-                const scroll = document.getElementById('messages');
-                scroll.scrollTop = scroll.scrollHeight;
+                this.lastMessageScroll();
             }
         },
 
-        async selectUser(id) {
-            this.recieveId = id;
+        async selectUser(user) {
+            this.dialog = {
+                recieveId: user._id,
+                name: user.username,
+            }
 
-            await this.getMessages({ authorId: this.userInfo._id, recieveId: id });
+            await this.getMessages({ authorId: this.userInfo._id, recieveId: user._id });
 
-            const scroll = document.getElementById('messages');
-            scroll.scrollTop = scroll.scrollHeight;
-        }
+            this.lastMessageScroll();
+        },
+        
+        lastMessageScroll() {
+            const e = document.querySelector('.chat-messages-bottom');
+            if (!e) return; 
+            
+            e.scrollIntoView({
+                behavior: 'auto',
+                block: 'end',
+            });
+        },
+
+        isScrollBottom() {
+            const block = this.$refs.messages;
+            if (block.scrollTop === block.scrollHeight - block.clientHeight) {
+                this.isScrollEnded = true;
+            } else {
+                this.isScrollEnded = false;
+            }
+        },
+
+        scrollEvent() {
+            const block = this.$refs.messages;
+            block.addEventListener('scroll', this.isScrollBottom);
+        },
+
+        // newMessageVoice() {
+        //     const sound = new Audio();
+        //     sound.src = 'assets/newMessage.ogg';
+        //     sound.play();
+        // }
     }
 }
 </script>
@@ -164,20 +216,47 @@ export default {
     }
 
     .chat-messages {
-        min-height: 100%;
+        margin-top: 30px;
+    }
+
+    .chat-messages-profile {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: white;
+        width: 100%;
+        padding: 15px;
+        border-bottom: 1px solid gray;
+    }
+
+    .chat-messages-unread {
+        position: absolute;
+        bottom: 60px;
+        right: 50px;
+        width: 50px;
+        height: 50px;
+        box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        line-height: 1;
+        padding-top: 10px;
+        text-align: center;
+        font-weight: bolder;
+        border-radius: 50%;
+        background: #e3e3e3;
+    }
+
+    .chat-messages-wrapper {
+        position: relative;
+        width: 100%;
+        height: 500px;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
     }
 
-    .chat-messages-wrapper {
-        width: 80%;
-    }
-
     .chat-messages-container {
-        height: 468px;
+        padding: 0 10px;
+        max-height: 100%;
         overflow: auto;
-        padding: 10px;
     }
 
     .chat-message {
